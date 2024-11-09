@@ -1,5 +1,6 @@
 const fs = require("fs");
 const xlsx = require("xlsx");
+const path = require("path");
 
 function sortPages(pages) {
     const pagesArr = Object.entries(pages);
@@ -28,33 +29,42 @@ function printReport(pages) {
     console.log("==========");
     console.log("END REPORT");
     console.log("==========");
-
-    // exportToCSV(sortedPages, "report.csv");
-    // exportToExcel(sortedPages, "report.xlsx");
 }
 
-// function exportToCSV(sortedPages, filename) {
-//     const header = "URL, Hits\n";
-//     const rows = sortedPages.map(([url, hits]) => `${url},${hits}`).join("\n");
-//     const csvContent = header + rows;
+// Ensure the output directory exists at root of the application.
+const dirname = "../output";
+const outputDir = path.join(__dirname, dirname);
+if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir);
+}
 
-//     fs.writeFile(filename, csvContent, "utf-8", (err) => {
-//         if (err) {
-//             console.error(`Error writing CSV file: ${err.message}`);
-//         } else {
-//             console.log(`Report exported to ${filename}`);
-//         }
-//     });
-// }
+function exportToCSV(pages) {
+    const sortedPages = sortPages(pages);
 
-// function exportToExcel(sortedPages, filename) {
-//     const worksheetData = [["URL", "Hits"], ...sortedPages];
-//     const worksheet = xlsx.utils.aoa_to_sheet(worksheetData);
-//     const workbook = xlsx.utils.book_new();
-//     xlsx.utils.book_append_sheet(workbook, worksheet, "Report");
+    const filename = path.join(outputDir, "report.csv");
+    const header = "URL, Hits\n";
+    const rows = sortedPages.map(([url, hits]) => `${url},${hits}`).join("\n");
+    const csvContent = header + rows;
 
-//     xlsx.writeFile(workbook, filename);
-//     console.log(`Report exported to ${filename}`);
-// }
+    fs.writeFile(filename, csvContent, "utf-8", (err) => {
+        if (err) {
+            console.error(`Error writing CSV file: ${err.message}`);
+        } else {
+            console.log(`Report exported to ${filename}`);
+        }
+    });
+}
 
-module.exports = { sortPages, printReport };
+function exportToXLSX(pages) {
+    const filename = path.join(outputDir, "report.xlsx");
+    const sortedPages = sortPages(pages);
+    const worksheetData = [["URL", "Hits"], ...sortedPages];
+    const worksheet = xlsx.utils.aoa_to_sheet(worksheetData);
+    const workbook = xlsx.utils.book_new();
+
+    xlsx.utils.book_append_sheet(workbook, worksheet, "Report");
+    xlsx.writeFile(workbook, filename);
+    console.log(`Report exported to ${filename}`);
+}
+
+module.exports = { sortPages, printReport, exportToCSV, exportToXLSX };
